@@ -24,7 +24,7 @@
     },
     "require": {
         "php": "^7.2",
-        "doctrine/dbal": "^2.10 || ^2.12",
+        "doctrine/dbal": "^2.10",
         "laravel/socialite": "^5.0",
         "socialiteproviders/yandex": "^4.0",
         "socialiteproviders/laravelpassport": "^4.0",
