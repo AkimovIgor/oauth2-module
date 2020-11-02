@@ -1,0 +1,34 @@
+{
+    "name": "altrpaid/oauth2",
+    "type": "laravel-module",
+    "description": "Plugin for oauth2 authentication",
+    "authors": [
+        {
+            "name": "AkimovIgor",
+            "email": "akimovigor5417@gmail.com"
+        }
+    ],
+    "extra": {
+        "laravel": {
+            "providers": [
+            ],
+            "aliases": {
+
+            }
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Modules\\Oauth2\\": ""
+        }
+    },
+    "require": {
+        "doctrine/dbal": "^2.12",
+        "laravel/socialite": "^5.0",
+        "socialiteproviders/laravelpassport": "^4.0",
+        "socialiteproviders/discord": "^4.0",
+        "socialiteproviders/instagram": "^4.0",
+        "socialiteproviders/vkontakte": "^4.2",
+        "socialiteproviders/yandex": "^4.0"
+    }
+}
