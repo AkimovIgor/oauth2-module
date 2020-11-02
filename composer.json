@@ -1,5 +1,5 @@
 {
-    "name": "altrpaid/oauth2",
+    "name": "altrpaid/oauth2-module",
     "type": "laravel-module",
     "description": "Plugin for oauth2 authentication",
     "authors": [
@@ -26,6 +26,7 @@
         "php": "^7.2",
         "doctrine/dbal": "^2.12",
         "laravel/socialite": "^5.0",
+        "socialiteproviders/yandex": "^4.0",
         "socialiteproviders/laravelpassport": "^1.0",
         "socialiteproviders/discord": "^4.0",
         "socialiteproviders/instagram": "^4.0",
