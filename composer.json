@@ -23,6 +23,7 @@
         }
     },
     "require": {
+        "php": "^7.2",
         "doctrine/dbal": "^2.12",
         "laravel/socialite": "^5.0",
         "socialiteproviders/laravelpassport": "^4.0",
