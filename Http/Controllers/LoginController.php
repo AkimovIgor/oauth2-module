@@ -31,7 +31,7 @@ class LoginController extends AppLoginController
         $providerClient = OauthProviderClient::find($provider_client_id);
         if (!$providerClient)
             return redirect()->back()->withErrors(['message' => 'Provider client not found.']);
-        $configPathFile = module_path('Oauth2', 'Config/services.php');
+        $configPathFile = base_path('/config/services.php');
         $result = $this->writeProviderClientSettingsToConfig($providerClient, $configPathFile);
         if (! $result)
             return redirect()->back()->withErrors(['message' => 'Failed to write params to config file.']);
