@@ -31,5 +31,5 @@
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-secondary " data-dismiss="modal">Close</button>
-    <button type="submit" class="btn btn-primary save_provider" data-method="post" data-url="{{ url('/plugins/oauth2/provider_clients/' . $providerClient->id) }}">Save</button>
+    <button type="submit" class="btn btn-primary save_provider_client" data-method="put" data-url="{{ url('/plugins/oauth2/provider_clients/' . $providerClient->id) }}">Save</button>
 </div>

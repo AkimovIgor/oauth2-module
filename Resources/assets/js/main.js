@@ -74,8 +74,6 @@ $( document ).ready(function() {
         sendAjax(method, url, data, 'collapseTwo');
     });
 
-
-
     $modal.on('click', '.save_provider', function (e) {
         e.preventDefault();
         var btn = $(this);
@@ -83,6 +81,7 @@ $( document ).ready(function() {
         var method = btn.data('method');
         var data = $('.data_form').serialize();
         sendAjax(method, url, data, 'collapseTwo');
+        $modal.modal('hide');
     });
 
     function sendAjaxAndShowModal(method, url, data){
@@ -131,7 +130,7 @@ $( document ).ready(function() {
 
     $('.close_modal').on('click', function (e) {
         e.preventDefault();
-        $('.modal').modal('hide');
+        $modal.modal('hide');
     });
 
 
