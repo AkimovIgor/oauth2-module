@@ -3,6 +3,7 @@
     "type": "laravel-module",
     "description": "Plugin for oauth2 authentication",
     "license": "MIT",
+    "minimum-stability": "dev",
     "authors": [
         {
             "name": "AkimovIgor",
