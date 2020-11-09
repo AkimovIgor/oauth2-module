@@ -78,7 +78,7 @@ class Oauth2Controller extends Controller
     public function showEditProviderClientForm(Request $request, $provider_client_id)
     {
         $providerClient = OauthProviderClient::find($provider_client_id);
-        $providers = OauthProvider::all();
+        $providers = OauthProvider::where('status','installed')->get();
         $view = View::make('oauth2::edit_provider_form', compact('providers', 'providerClient'))->render();
         return response()->json(['content' => $view], 200);
     }
