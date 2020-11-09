@@ -3,7 +3,6 @@
 @section('content')
     <div class="container">
         <div class="row justify-content-center">
-
             <div class="col-md-8">
                 <div class="accordion" id="accordionExample">
                     <div class="card">
@@ -27,12 +26,11 @@
                                 @else
                                 <table class="table table-hover table-sm">
                                     <thead>
-                                    <tr>
-                                        <th scope="col">ID</th>
-                                        <th scope="col">Name</th>
-                                        <th scope="col">Redirect URI</th>
-{{--                                        <th scope="col"></th>--}}
-                                    </tr>
+                                        <tr>
+                                            <th scope="col">ID</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Redirect URI</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
                                     @foreach($providers as $provider)
@@ -40,12 +38,6 @@
                                             <td>{{ $provider->id }}</td>
                                             <td>{{ $provider->name }}</td>
                                             <td>{{ $provider->redirect_uri }}</td>
-{{--                                            <td>--}}
-{{--                                                <div class="custom-control custom-switch">--}}
-{{--                                                    <input type="checkbox" class="custom-control-input" id="customSwitches{{ $provider->id }}">--}}
-{{--                                                    <label class="custom-control-label" for="customSwitches{{ $provider->id }}"></label>--}}
-{{--                                                </div>--}}
-{{--                                            </td>--}}
                                         </tr>
                                     @endforeach
                                     </tbody>
@@ -68,7 +60,7 @@
                             </div>
 
                         </div>
-                        <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordionExample">
+                        <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionExample">
                             <div class="card-body">
                                 @if($providerClients->isEmpty())
                                     <span>Please, add a new client.</span>
@@ -149,38 +141,40 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <div class="mb-0">
-                        <button class="btn btn-light btn-sm" type="button" data-toggle="collapse" data-target="#collapse" aria-expanded="true" aria-controls="collapse">
-                            Instructions
-                        </button>
+            <div class="accordion" id="accordionExample2">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="mb-0">
+                            <button class="btn btn-light btn-sm" type="button" data-toggle="collapse" data-target="#collapse" aria-expanded="true" aria-controls="collapse">
+                                Instructions
+                            </button>
+                        </div>
                     </div>
-                </div>
-                <div id="collapse" class="collapse" aria-labelledby="heading" data-parent=".card">
-                    <div class="card-body">
-                        <ul class="list-group list-group-flush" style="height: 500px; overflow: auto">
-                            <li class="list-group-item">1. Install a new provider if yours is not on the list of <a href="#providers" class="badge badge-light">Providers</a> by clicking on the <a class="badge badge-success">Install New Provider</a> button.</li>
-                            <li class="list-group-item">2. Click to <a href="#providers" class="badge badge-light">Providers</a> and copy <b>Redirect URI</b> of your provider needed.</li>
-                            <li class="list-group-item">3. Go to the credentials page of the required provider, for example for Google it is:
-                                <a href="https://console.developers.google.com/apis/credentials">Google Credentials</a></li>
-                            <li class="list-group-item">
-                                4. On the provider page, create a new <a href="https://{{ config('app.locale') }}.wikipedia.org/wiki/OAuth">Oauth 2.0</a> client, remembering to specify the <b>Redirect URI</b> you copied earlier in the appropriate field, preceded by your domain name, for example: <code>https://your.domain.name.com/login/provider_name/callback</code>
-                            </li>
-                            <li class="list-group-item">
-                                5. Click to <a class="badge badge-primary">Add Client</a> button on <a href="#clients" class="badge badge-light">Clients</a>. Select the required provider, fill in the required fields with the data of the provider client you created and save it.
-                            </li>
-                            <li class="list-group-item">
-                                6. Go to <a href="#clients" class="badge badge-light">Clients</a>, copy the required <b>ID</b> to form the following link for login, for example:
-                                <code>/login/<span style="color: #9561e2">23</span></code>
-                            </li>
-                            <li class="list-group-item">
-                                7. Paste your login link anywhere on your website.  <a href="/login/23" class="btn btn-primary btn-sm"><img src="https://developers-dot-devsite-v2-prod.appspot.com/identity/sign-in/g-normal.png" width="16px" alt=""> Login with Google</a>
-                            </li>
-                            <li class="list-group-item">
-                                8. You can view authorized accounts on the <a href="#accounts" class="badge badge-light">Accounts</a>.
-                            </li>
-                        </ul>
+                    <div id="collapse" class="collapse" aria-labelledby="heading" data-parent="#accordionExample2">
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush" style="height: 500px; overflow: auto">
+                                <li class="list-group-item">1. Install a new provider if yours is not on the list of <a href="#providers" class="badge badge-light">Providers</a> by clicking on the <a class="badge badge-success">Install New Provider</a> button.</li>
+                                <li class="list-group-item">2. Click to <a href="#providers" class="badge badge-light">Providers</a> and copy <b>Redirect URI</b> of your provider needed.</li>
+                                <li class="list-group-item">3. Go to the credentials page of the required provider, for example for Google it is:
+                                    <a href="https://console.developers.google.com/apis/credentials">Google Credentials</a></li>
+                                <li class="list-group-item">
+                                    4. On the provider page, create a new <a href="https://{{ config('app.locale') }}.wikipedia.org/wiki/OAuth">Oauth 2.0</a> client, remembering to specify the <b>Redirect URI</b> you copied earlier in the appropriate field, preceded by your domain name, for example: <code>https://your.domain.name.com/login/google/callback</code>
+                                </li>
+                                <li class="list-group-item">
+                                    5. Click to <a class="badge badge-primary">Add Client</a> button on <a href="#clients" class="badge badge-light">Clients</a>. Select the required provider, fill in the required fields with the data of the provider client you created and save it.
+                                </li>
+                                <li class="list-group-item">
+                                    6. Go to <a href="#clients" class="badge badge-light">Clients</a>, copy the required <b>ID</b> to form the following link for login, for example:
+                                    <code>/login/<span style="color: #9561e2">23</span></code>
+                                </li>
+                                <li class="list-group-item">
+                                    7. Paste your login link anywhere on your website.  <a href="/login/23" class="btn btn-primary btn-sm"><img src="https://developers-dot-devsite-v2-prod.appspot.com/identity/sign-in/g-normal.png" width="16px" alt=""> Login with Google</a>
+                                </li>
+                                <li class="list-group-item">
+                                    8. You can view authorized accounts on the <a href="#accounts" class="badge badge-light">Accounts</a>.
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
