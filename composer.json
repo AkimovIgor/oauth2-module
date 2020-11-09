@@ -2,6 +2,7 @@
     "name": "altrpaid/oauth2-module",
     "type": "laravel-module",
     "description": "Plugin for oauth2 authentication",
+    "license": "MIT",
     "authors": [
         {
             "name": "AkimovIgor",
@@ -11,6 +12,7 @@
     "extra": {
         "laravel": {
             "providers": [
+                "Modules\\Oauth2\\Providers\\Oauth2ServiceProvider"
             ],
             "aliases": {
 
@@ -23,7 +25,6 @@
         }
     },
     "require": {
-        "php": "^7.2",
         "doctrine/dbal": "^2.10",
         "laravel/socialite": "^5.0",
         "socialiteproviders/yandex": "^4.0",
