@@ -45,7 +45,7 @@ class Oauth2Controller extends Controller
         $data = $request->all();
         $data['status'] = 'installed';
         $provider = OauthProvider::find($request->provider_id);
-        $configPathFile = base_path('/config/services.php');
+        $configPathFile = module_path('Oauth2','Config/services.php');
         if (!$this->providerSettingsExists($provider, $configPathFile)) {
             $this->writeProviderConfig($provider, $configPathFile);
         }
@@ -97,7 +97,7 @@ class Oauth2Controller extends Controller
             'client_secret' => 'required',
         ]);
         $provider = OauthProvider::find($request->provider_id);
-        $configPathFile = base_path('/config/services.php');
+        $configPathFile = module_path('Oauth2','Config/services.php');
         if (!$this->providerSettingsExists($provider, $configPathFile)) {
             $this->writeProviderConfig($provider, $configPathFile);
         }
