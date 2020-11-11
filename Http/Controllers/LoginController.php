@@ -31,21 +31,7 @@ class LoginController extends AppLoginController
         $providerClient = OauthProviderClient::find($provider_client_id);
         if (!$providerClient)
             return redirect()->back()->withErrors(['message' => 'Provider client not found.']);
-        $configPathFile = file_exists(config_path('oauth2_services.php'))
-            ? config_path('oauth2_services.php')
-            : module_path('Oauth2','Config/services.php');
-        $result = $this->writeProviderClientSettingsToConfig($providerClient, $configPathFile);
-        if (! $result)
-            return redirect()->back()->withErrors(['message' => 'Failed to write params to config file.']);
-        $config = [
-            'client_id' => $providerClient->client_id,
-            'client_secret' => $providerClient->client_secret,
-            'redirect' => $providerClient->provider->redirect_uri,
-        ];
-        if ($providerClient->host) {
-            $config['host'] = $providerClient->host;
-        }
-        Config::set('services.' . $providerClient->provider->name, $config);
+        $this->setClientConfig($providerClient);
         session()->put('provider_client_id', $provider_client_id);
         return Socialite::driver($providerClient->provider->name)->redirect();
     }
@@ -58,6 +44,8 @@ class LoginController extends AppLoginController
      */
     public function handleProviderCallback($provider)
     {
+        $providerClient = OauthProviderClient::find(session()->get('provider_client_id'));
+        $this->setClientConfig($providerClient);
         $provider = OauthProvider::where('name', $provider)->first();
         if (!$provider)
             return redirect()->back()->withErrors(['message' => 'Provider not found.']);
@@ -166,13 +154,19 @@ class LoginController extends AppLoginController
     }
 
     /**
-     * Установить новый пакет
-     * @param $command
-     * @return string
+     * Установить конфигурацию клиента провайдера
+     * @param $providerClient
      */
-    protected function setup($command)
+    protected function setClientConfig($providerClient)
     {
-        $result = exec($command);
-        return $result;
+        $config = [
+            'client_id' => $providerClient->client_id,
+            'client_secret' => $providerClient->client_secret,
+            'redirect' => $providerClient->provider->redirect_uri,
+        ];
+        if ($providerClient->host) {
+            $config['host'] = $providerClient->host;
+        }
+        Config::set('services.' . $providerClient->provider->name, $config);
     }
 }

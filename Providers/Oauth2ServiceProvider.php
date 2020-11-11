@@ -55,14 +55,8 @@ class Oauth2ServiceProvider extends ServiceProvider
         $this->publishes([
             module_path($this->moduleName, 'Config/config.php') => config_path($this->moduleNameLower . '.php'),
         ], 'config');
-        $this->publishes([
-            module_path($this->moduleName, 'Config/services.php') => config_path($this->moduleNameLower . '_services.php'),
-        ], 'config');
         $this->mergeConfigFrom(
             module_path($this->moduleName, 'Config/config.php'), $this->moduleNameLower
-        );
-        $this->mergeConfigFrom(
-            module_path($this->moduleName, 'Config/services.php'), $this->moduleNameLower . '_services'
         );
     }
 

@@ -23,9 +23,7 @@ class Oauth2Controller extends Controller
      */
     public function __construct()
     {
-        $this->serviceConfigFile = file_exists(config_path('oauth2_services.php'))
-            ? config_path('oauth2_services.php')
-            : module_path('Oauth2','Config/services.php');
+        $this->serviceConfigFile = module_path('Oauth2','Config/services.php');
     }
 
     /**
@@ -34,13 +32,7 @@ class Oauth2Controller extends Controller
      */
     public function dashboard()
     {
-        $providers = OauthProvider::all();
-        foreach ($providers as $provider) {
-            if (!$this->providerSettingsExists($provider, $this->serviceConfigFile)) {
-                $this->writeProviderConfig($provider, $this->serviceConfigFile);
-            }
-        }
-        $providers = collect($providers->where('status', 'installed')->all());
+        $providers = OauthProvider::where('status', 'installed')->get();
         $providerClients = OauthProviderClient::all();
         $socialAccounts = SocialAccount::all();
         return view('oauth2::dashboard', compact('providers', 'providerClients', 'socialAccounts'));
@@ -67,9 +59,6 @@ class Oauth2Controller extends Controller
         $data = $request->all();
         $data['status'] = 'installed';
         $provider = OauthProvider::find($request->provider_id);
-        if (!$this->providerSettingsExists($provider, $this->serviceConfigFile)) {
-            $this->writeProviderConfig($provider, $this->serviceConfigFile);
-        }
         $provider->update($data);
         $providers = OauthProvider::where('status', 'installed')->get();
         $view = View::make('oauth2::providers_table', compact('providers'))->render();
@@ -117,10 +106,6 @@ class Oauth2Controller extends Controller
             'client_id' => 'required',
             'client_secret' => 'required',
         ]);
-        $provider = OauthProvider::find($request->provider_id);
-        if (!$this->providerSettingsExists($provider, $this->serviceConfigFile)) {
-            $this->writeProviderConfig($provider, $this->serviceConfigFile);
-        }
         $providerClient = new OauthProviderClient($request->all());
         $providerClient->save();
         $providerClients = OauthProviderClient::all();
@@ -136,10 +121,6 @@ class Oauth2Controller extends Controller
      */
     public function editProviderClient(Request $request, $provider_client_id)
     {
-        $provider = OauthProvider::find($request->provider_id);
-        if (!$this->providerSettingsExists($provider, $this->serviceConfigFile)) {
-            $this->writeProviderConfig($provider, $this->serviceConfigFile);
-        }
         $providerClient = OauthProviderClient::find($provider_client_id);
         $providerClient->update($request->all());
         $providerClients = OauthProviderClient::all();
