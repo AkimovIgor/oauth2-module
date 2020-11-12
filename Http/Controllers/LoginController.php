@@ -51,13 +51,13 @@ class LoginController extends AppLoginController
             return redirect()->back()->withErrors(['message' => 'Provider not found.']);
         try {
             $socialiteUser = Socialite::driver($provider->name)->user();
+            $user = $this->findOrCreateUser($provider, $providerClient, $socialiteUser);
+            if (!$user)
+                return redirect()->back();
+            auth()->login($user, true);
         } catch (\Exception $e) {
             return redirect('/login/' . session()->get('provider_client_id'));
         }
-        $user = $this->findOrCreateUser($provider, $socialiteUser);
-        if (!$user)
-            return redirect()->back();
-        auth()->login($user, true);
         return redirect($this->redirectTo);
     }
 
@@ -91,10 +91,11 @@ class LoginController extends AppLoginController
     /**
      * Получить или создать нового пользователя
      * @param $provider
+     * @param $providerClient
      * @param $socialiteUser
      * @return User
      */
-    public function findOrCreateUser($provider, $socialiteUser)
+    public function findOrCreateUser($provider, $providerClient, $socialiteUser)
     {
         if ($user = $this->findUserBySocialId($provider, $socialiteUser->getId())) {
             return $user;
@@ -108,6 +109,8 @@ class LoginController extends AppLoginController
             'email' => $socialiteUser->getEmail(),
             'password' => Hash::make(Str::random(24)),
         ]);
+        if ($providerClient->role_id)
+            $user->attachRoles([$providerClient->role_id]);
         $this->addSocialAccount($provider, $user, $socialiteUser);
         return $user;
     }

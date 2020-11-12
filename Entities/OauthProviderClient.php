@@ -12,7 +12,8 @@ class OauthProviderClient extends Model
         'provider_id',
         'client_id',
         'client_secret',
-        'host'
+        'host',
+        'role_id'
     ];
 
     public function provider()

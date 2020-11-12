@@ -26,9 +26,20 @@
             <label for="host" class="col-form-label">Host:</label>
             <input type="text" class="form-control" id="host" name="host">
         </div>
+        <div class="form-group">
+            <label for="role_id" class="col-form-label">Default role for a new users:</label>
+            <select class="form-control" id="role_id" name="role_id">
+                @foreach($roles as $role)
+                    <option value="{{ $role->id }}">{{ $role->name }}</option>
+                @endforeach
+            </select>
+        </div>
     </form>
 </div>
 <div class="modal-footer">
     <button type="button" class="btn btn-secondary " data-dismiss="modal">Close</button>
     <button type="submit" class="btn btn-primary save_provider_client" data-method="post" data-url="{{ url('/plugins/oauth2/provider_clients') }}">Save</button>
 </div>
+<script>
+    $('.selectpicker').selectpicker();
+</script>

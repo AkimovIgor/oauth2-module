@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Modules\Oauth2\Entities\OauthProvider;
 use Modules\Oauth2\Entities\OauthProviderClient;
 use Modules\Oauth2\Entities\SocialAccount;
+use App\Role;
 
 class Oauth2Controller extends Controller
 {
@@ -75,8 +76,9 @@ class Oauth2Controller extends Controller
      */
     public function showAddProviderClientForm(Request $request)
     {
+        $roles = Role::all();
         $providers = OauthProvider::where('status','installed')->get();
-        $view = View::make('oauth2::add_provider_form', compact('providers'))->render();
+        $view = View::make('oauth2::add_provider_form', compact('providers', 'roles'))->render();
         return response()->json(['content' => $view], 200);
     }
 
@@ -87,9 +89,10 @@ class Oauth2Controller extends Controller
      */
     public function showEditProviderClientForm(Request $request, $provider_client_id)
     {
+        $roles = Role::all();
         $providerClient = OauthProviderClient::find($provider_client_id);
         $providers = OauthProvider::where('status','installed')->get();
-        $view = View::make('oauth2::edit_provider_form', compact('providers', 'providerClient'))->render();
+        $view = View::make('oauth2::edit_provider_form', compact('providers', 'providerClient', 'roles'))->render();
         return response()->json(['content' => $view], 200);
     }
 
