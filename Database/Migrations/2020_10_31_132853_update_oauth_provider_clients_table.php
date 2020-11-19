@@ -13,7 +13,7 @@ class UpdateOauthProviderClientsTable extends Migration
      */
     public function up()
     {
-        Schema::create('oauth_provider_clients', function (Blueprint $table) {
+        Schema::table('oauth_provider_clients', function (Blueprint $table) {
             $table->string('role_id')->after('host')->nullable();
         });
     }
