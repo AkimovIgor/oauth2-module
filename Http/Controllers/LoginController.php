@@ -33,7 +33,7 @@ class LoginController extends AppLoginController
             return redirect()->back()->withErrors(['message' => 'Provider client not found.']);
         $this->setClientConfig($providerClient);
         session()->put('provider_client_id', $provider_client_id);
-        return Socialite::driver($providerClient->provider->name)->redirect();
+        return Socialite::driver($providerClient->provider->name)->stateless()->redirect();
     }
 
     /**
@@ -50,7 +50,7 @@ class LoginController extends AppLoginController
         if (!$provider)
             return redirect()->back()->withErrors(['message' => 'Provider not found.']);
         try {
-            $socialiteUser = Socialite::driver($provider->name)->user();
+            $socialiteUser = Socialite::driver($provider->name)->stateless()->user();
             $user = $this->findOrCreateUser($provider, $providerClient, $socialiteUser);
             if (!$user)
                 return redirect()->back();
@@ -98,20 +98,52 @@ class LoginController extends AppLoginController
     public function findOrCreateUser($provider, $providerClient, $socialiteUser)
     {
         if ($user = $this->findUserBySocialId($provider, $socialiteUser->getId())) {
+            $user = $this->attachRoles($user, $providerClient, $socialiteUser);
             return $user;
         }
+
         if ($user = $this->findUserByEmail($provider, $socialiteUser->getEmail())) {
+            $user = $this->attachRoles($user, $providerClient, $socialiteUser);
             $this->addSocialAccount($provider, $user, $socialiteUser);
             return $user;
         }
+
         $user = User::create([
             'name' => $socialiteUser->getName(),
             'email' => $socialiteUser->getEmail(),
             'password' => Hash::make(Str::random(24)),
         ]);
-        if ($providerClient->role_id)
-            $user->attachRoles([$providerClient->role_id]);
+
+        if ($providerClient->role_id) {
+            $user = $this->attachRoles($user, $providerClient, $socialiteUser);
+        }
+
         $this->addSocialAccount($provider, $user, $socialiteUser);
+        return $user;
+    }
+
+    /**
+     * Прикрепить роли
+     * @param $user
+     * @param $providerClient
+     * @param $socialiteUser
+     * @return mixed
+     */
+    protected function attachRoles($user, $providerClient, $socialiteUser)
+    {
+        $providerClients = collect($socialiteUser->getRaw()['oauth_roles'])
+            ->where('oauth_client_id', $providerClient->client_id)
+            ->where('passport_id', $providerClient->id)
+            ->pluck('passport_id')
+            ->all();
+        $roles = [];
+        $providerClients = OauthProviderClient::whereIn('id', $providerClients)->get();
+        foreach ($providerClients as $client) {
+            $roles[] = $client->role_id;
+        }
+        $user->detachRoles($roles);
+        $user->attachRoles($roles);
+
         return $user;
     }
 
