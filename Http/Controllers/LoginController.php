@@ -5,6 +5,7 @@ namespace Modules\Oauth2\Http\Controllers;
 
 use App\Http\Controllers\Auth\LoginController as AppLoginController;
 use App\User;
+use App\Role;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -131,16 +132,12 @@ class LoginController extends AppLoginController
      */
     protected function attachRoles($user, $providerClient, $socialiteUser)
     {
-        $providerClients = collect($socialiteUser->getRaw()['oauth_roles'])
+        $roles = collect($socialiteUser->getRaw()['oauth_roles'])
             ->where('oauth_client_id', $providerClient->client_id)
             ->where('passport_id', $providerClient->id)
-            ->pluck('passport_id')
+            ->pluck('display_name')
             ->all();
-        $roles = [];
-        $providerClients = OauthProviderClient::whereIn('id', $providerClients)->get();
-        foreach ($providerClients as $client) {
-            $roles[] = $client->role_id;
-        }
+        $roles = Role::whereIn('name', $roles)->get();
         $user->detachRoles($roles);
         $user->attachRoles($roles);
 
