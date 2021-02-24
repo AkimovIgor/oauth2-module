@@ -5,10 +5,11 @@ namespace Modules\Oauth2\Http\Controllers;
 
 use App\Http\Controllers\Auth\LoginController as AppLoginController;
 use App\User;
-use App\Role;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Ixudra\Curl\Facades\Curl;
 use Laravel\Socialite\Facades\Socialite;
 use Modules\Oauth2\Entities\OauthProvider;
 use Modules\Oauth2\Entities\OauthProviderClient;
@@ -56,10 +57,40 @@ class LoginController extends AppLoginController
             if (!$user)
                 return redirect()->back();
             auth()->login($user, true);
+            $this->authInTheChat($user);
         } catch (\Exception $e) {
             return redirect('/login/' . session()->get('provider_client_id'));
         }
         return redirect($this->redirectTo);
+    }
+
+    /**
+     * Авторизовать пользователя в чате
+     * @param $user
+     */
+    protected function authInTheChat($user)
+    {
+        $emailParts = explode('@', $user->email);
+        $login = implode('_', $emailParts);
+        $userFullName = $user->name;
+        $userFullName .= $user->last_name ? ' ' . $user->last_name : '';
+
+        $data = json_decode('{"identifier": {
+            "type": "m.id.user",
+            "user": "' . $login . '"
+          },
+          "initial_device_display_name": "' . $userFullName . '",
+          "password": "globus",
+          "type": "m.login.password"}');
+
+        $response = Curl::to('https://event.regagro.net/_matrix/client/r0/login')
+            ->withData($data)
+            ->asJson()
+            ->post();
+
+        if (isset($response->error)) {
+            Log::info($response->error);
+        }
     }
 
     /**
@@ -132,13 +163,16 @@ class LoginController extends AppLoginController
      */
     protected function attachRoles($user, $providerClient, $socialiteUser)
     {
-        $roles = collect($socialiteUser->getRaw()['oauth_roles'])
+        $providers = collect($socialiteUser->getRaw()['oauth_roles'])
             ->where('oauth_client_id', $providerClient->client_id)
-            ->where('passport_id', $providerClient->id)
-            ->pluck('display_name')
+            ->pluck('passport_id')
             ->all();
-        $roles = Role::whereIn('name', $roles)->get();
-        $user->detachRoles($roles);
+        $roles = [];
+        $providerClients = OauthProviderClient::whereIn('id', $providers)->get();
+        foreach ($providerClients as $client) {
+            $roles[] = $client->role_id;
+        }
+        $user->detachRoles($user->roles);
         $user->attachRoles($roles);
 
         return $user;
