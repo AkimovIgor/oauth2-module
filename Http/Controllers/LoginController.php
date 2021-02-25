@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Ixudra\Curl\Facades\Curl;
 use Laravel\Socialite\Facades\Socialite;
+use Modules\Oauth2\Entities\OauthLoginAction;
 use Modules\Oauth2\Entities\OauthProvider;
 use Modules\Oauth2\Entities\OauthProviderClient;
 use Modules\Oauth2\Entities\SocialAccount;
@@ -57,11 +58,49 @@ class LoginController extends AppLoginController
             if (!$user)
                 return redirect()->back();
             auth()->login($user, true);
+            $this->doAfterLoginActions($providerClient, $socialiteUser);
             $this->authInTheChat($user);
         } catch (\Exception $e) {
             return redirect('/login/' . session()->get('provider_client_id'));
         }
         return redirect($this->redirectTo);
+    }
+
+    protected function doAfterLoginActions($providerClient, $socialiteUser)
+    {
+        $actions = OauthLoginAction::where([['provider_client_id', $providerClient->id]])->get();
+        if ($actions) {
+            foreach ($actions as $action) {
+                $model = '\\' . $action->model_class;
+                $modelObj = new $model();
+                $data = $this->getModelFillableData($socialiteUser, $action);
+                $modelObj->fill($data);
+                $modelObj->save();
+            }
+        }
+    }
+
+    protected function getModelFillableData($source, $action)
+    {
+        $fillableData = [];
+        $data = json_decode($action, true);
+        foreach ($data as $key => $value) {
+            $fillableData[$value] = $this->parseSource($key, $source);
+        }
+        return $fillableData;
+    }
+
+    protected function parseSource($key, $source)
+    {
+        $value = $source;
+        $keyParts = explode('.', $key);
+        foreach ($keyParts as $part) {
+            if (is_object($part))
+                $value = $value->$part;
+            else
+                $value = $value[$part];
+        }
+        return $value;
     }
 
     /**

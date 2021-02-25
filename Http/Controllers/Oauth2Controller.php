@@ -2,10 +2,12 @@
 
 namespace Modules\Oauth2\Http\Controllers;
 
+use App\Altrp\Model;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
+use Modules\Oauth2\Entities\OauthLoginAction;
 use Modules\Oauth2\Entities\OauthProvider;
 use Modules\Oauth2\Entities\OauthProviderClient;
 use Modules\Oauth2\Entities\SocialAccount;
@@ -78,7 +80,10 @@ class Oauth2Controller extends Controller
     {
         $roles = Role::all();
         $providers = OauthProvider::where('status','installed')->get();
-        $view = View::make('oauth2::add_provider_form', compact('providers', 'roles'))->render();
+        $providerClients = OauthProviderClient::all();
+        $models = Model::where('preset', '!=', 1)->get();
+        $actions = OauthLoginAction::all();
+        $view = View::make('oauth2::add_provider_form', compact('providers', 'roles', 'actions', 'models', 'providerClients'))->render();
         return response()->json(['content' => $view], 200);
     }
 
@@ -91,8 +96,18 @@ class Oauth2Controller extends Controller
     {
         $roles = Role::all();
         $providerClient = OauthProviderClient::find($provider_client_id);
+        $providerClients = collect([$providerClient]);
         $providers = OauthProvider::where('status','installed')->get();
-        $view = View::make('oauth2::edit_provider_form', compact('providers', 'providerClient', 'roles'))->render();
+        $models = Model::where('preset', '!=', 1)->get();
+        $actions = OauthLoginAction::where([
+            ['provider_client_id', $provider_client_id],
+            ['name', '!=', null],
+            ['source', '!=', null],
+            ['model_class', '!=', null],
+            ['data', '!=', null],
+            ['status', 1],
+        ])->get();
+        $view = View::make('oauth2::edit_provider_form', compact('providers', 'providerClient', 'roles', 'models', 'actions' ,'providerClients'))->render();
         return response()->json(['content' => $view], 200);
     }
 
@@ -162,6 +177,45 @@ class Oauth2Controller extends Controller
         return false;
     }
 
+    public function showAddActionForm()
+    {
+        $newAction = new OauthLoginAction();
+        $newAction->save();
+        $providerClients = OauthProviderClient::all();
+        $models = Model::where('preset', '!=', 1)->get();
+        $actions = OauthLoginAction::all();
+        $view = View::make('oauth2::actions_list', compact('actions', 'models', 'providerClients'))->render();
+        return response()->json(['content' => $view], 200);
+    }
+
+    public function saveLoginAction(Request $request, $action_id)
+    {
+        $data = $request->all();
+        $data['status'] = isset($data['status']) ? 1 : 0;
+        $data['data'] = $this->parseActionData($data['data']);
+        $action = OauthLoginAction::find($action_id);
+        $action->fill($data);
+        $result = $action->save();
+        return response()->json(['content' => $result], 200);
+    }
+
+    public function deleteLoginAction($action_id)
+    {
+        $action = OauthLoginAction::find($action_id);
+        $action->delete();
+        $providerClients = OauthProviderClient::all();
+        $models = Model::where('preset', '!=', 1)->get();
+        $actions = OauthLoginAction::all();
+        $view = View::make('oauth2::actions_list', compact('actions', 'models', 'providerClients'))->render();
+        return response()->json(['content' => $view], 200);
+    }
+
+    public function addTableRow()
+    {
+        $view = View::make('oauth2::add_table_row')->render();
+        return response()->json(['content' => $view], 200);
+    }
+
     /**
      * Записать дефолтную конфигурацию провайдера в файл конфигурации
      * @param $provider
@@ -190,5 +244,17 @@ class Oauth2Controller extends Controller
             }
         }
         return file_put_contents($file, implode(PHP_EOL, $fileContent));
+    }
+
+    protected function parseActionData($data)
+    {
+        $parsedData = [];
+        if ($data) {
+            for ($i = 0; $i < count($data); $i+=2) {
+                if (!empty($data[$i]))
+                    $parsedData[$data[$i]] = $data[$i + 1];
+            }
+        }
+        return $parsedData;
     }
 }

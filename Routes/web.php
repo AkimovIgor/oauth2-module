@@ -20,6 +20,11 @@ if (Module::isEnabled('Oauth2')) {
         Route::get('/provider_clients/add', 'Oauth2Controller@showAddProviderClientForm');
         Route::post('/provider_clients', 'Oauth2Controller@addProviderClient');
 
+        Route::get('/actions/add', 'Oauth2Controller@showAddActionForm');
+        Route::post('/actions/update/{action_id}', 'Oauth2Controller@saveLoginAction');
+        Route::delete('/actions/delete/{action_id}', 'Oauth2Controller@deleteLoginAction');
+        Route::get('/add_row', 'Oauth2Controller@addTableRow');
+
         Route::get('/provider_clients/edit/{provider_client_id}', 'Oauth2Controller@showEditProviderClientForm');
         Route::put('/provider_clients/{provider_client_id}', 'Oauth2Controller@editProviderClient');
         Route::delete('/provider_clients/{provider_client_id}', 'Oauth2Controller@deleteProviderClient');
