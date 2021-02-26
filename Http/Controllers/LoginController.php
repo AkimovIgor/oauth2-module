@@ -15,6 +15,7 @@ use Modules\Oauth2\Entities\OauthLoginAction;
 use Modules\Oauth2\Entities\OauthProvider;
 use Modules\Oauth2\Entities\OauthProviderClient;
 use Modules\Oauth2\Entities\SocialAccount;
+use SocialiteProviders\Manager\OAuth2\User as OauthUser;
 
 
 class LoginController extends AppLoginController
@@ -58,7 +59,7 @@ class LoginController extends AppLoginController
             if (!$user)
                 return redirect()->back();
             auth()->login($user, true);
-            $this->doAfterLoginActions($providerClient, $socialiteUser);
+            $this->doAfterLoginActions($providerClient, $socialiteUser, $user);
             $this->authInTheChat($user);
         } catch (\Exception $e) {
             return redirect('/login/' . session()->get('provider_client_id'));
@@ -66,33 +67,59 @@ class LoginController extends AppLoginController
         return redirect($this->redirectTo);
     }
 
-    protected function doAfterLoginActions($providerClient, $socialiteUser)
+    /**
+     * Выполнить действия после авторизации
+     * @param $providerClient
+     * @param $socialiteUser
+     * @param $user
+     */
+    protected function doAfterLoginActions($providerClient, $socialiteUser, $user)
     {
         $actions = OauthLoginAction::where([['provider_client_id', $providerClient->id]])->get();
         if ($actions) {
             foreach ($actions as $action) {
                 $model = '\\' . $action->model_class;
                 $modelObj = new $model();
-                $data = $this->getModelFillableData($socialiteUser, $action);
-                $modelObj->fill($data);
+                $data = $this->getModelFillableData($socialiteUser, $user, $action);
+                foreach ($data as $attr => $val) {
+                    $modelObj->$attr = $val;
+                }
                 $modelObj->save();
             }
         }
     }
 
-    protected function getModelFillableData($source, $action)
+    /**
+     * Сформировать данные для заполнения атрибутов модели
+     * @param $source
+     * @param $user
+     * @param $action
+     * @return array
+     */
+    protected function getModelFillableData($source, $user, $action)
     {
         $fillableData = [];
-        $data = json_decode($action, true);
-        foreach ($data as $key => $value) {
-            $fillableData[$value] = $this->parseSource($key, $source);
+        foreach ($action->data as $key => $value) {
+            $fillableData[$value] = $this->parseSource($key, $source, $user);
         }
         return $fillableData;
     }
 
-    protected function parseSource($key, $source)
+    /**
+     * Обработать данные источника данных
+     * @param $key
+     * @param $source
+     * @param $user
+     * @return array|mixed
+     */
+    protected function parseSource($key, $source, $user)
     {
-        $value = $source;
+        if ($source instanceof OauthUser) {
+            $value = $source->getRaw();
+        } else {
+            $value = $source;
+        }
+        $value['current_user'] = $user->toArray();
         $keyParts = explode('.', $key);
         foreach ($keyParts as $part) {
             if (is_object($part))

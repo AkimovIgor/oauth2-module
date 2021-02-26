@@ -12,6 +12,10 @@ class OauthLoginAction extends Model
 
     protected $appends = ['data'];
 
+    public $casts = [
+        'data' => 'array'
+    ];
+
     protected $fillable = [
         'provider_client_id',
         'name',
@@ -20,11 +24,6 @@ class OauthLoginAction extends Model
         'data',
         'status'
     ];
-
-    public function getDataAttribute($value)
-    {
-        return json_decode($value, true);
-    }
 
     public function setDataAttribute($value)
     {
