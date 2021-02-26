@@ -5,6 +5,7 @@ namespace Modules\Oauth2\Http\Controllers;
 
 use App\Http\Controllers\Auth\LoginController as AppLoginController;
 use App\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -27,16 +28,19 @@ class LoginController extends AppLoginController
 
     /**
      * Перенаправить запрос на провайдера
+     * @param Request $request
      * @param $provider_client_id
      * @return \Illuminate\Http\RedirectResponse|\Symfony\Component\HttpFoundation\RedirectResponse
      */
-    public function redirectToProvider($provider_client_id)
+    public function redirectToProvider(Request $request, $provider_client_id)
     {
+        $mobileLogin = $request->has('mobile') && $request->get('mobile') == 1 ? 1 : 0;
         $providerClient = OauthProviderClient::find($provider_client_id);
         if (!$providerClient)
             return redirect()->back()->withErrors(['message' => 'Provider client not found.']);
         $this->setClientConfig($providerClient);
         session()->put('provider_client_id', $provider_client_id);
+        session()->put('is_mobile_login', $mobileLogin);
         return Socialite::driver($providerClient->provider->name)->stateless()->redirect();
     }
 
@@ -49,12 +53,17 @@ class LoginController extends AppLoginController
     public function handleProviderCallback($provider)
     {
         $providerClient = OauthProviderClient::find(session()->get('provider_client_id'));
+        $isMobile = session()->get('is_mobile_login');
         $this->setClientConfig($providerClient);
         $provider = OauthProvider::where('name', $provider)->first();
         if (!$provider)
             return redirect()->back()->withErrors(['message' => 'Provider not found.']);
         try {
             $socialiteUser = Socialite::driver($provider->name)->stateless()->user();
+            if ($isMobile) {
+                session()->forget('is_mobile_login');
+                return $socialiteUser->accessTokenResponseBody;
+            }
             $user = $this->findOrCreateUser($provider, $providerClient, $socialiteUser);
             if (!$user)
                 return redirect()->back();
