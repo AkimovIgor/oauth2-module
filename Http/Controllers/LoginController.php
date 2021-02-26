@@ -84,7 +84,14 @@ class LoginController extends AppLoginController
      */
     protected function doAfterLoginActions($providerClient, $socialiteUser, $user)
     {
-        $actions = OauthLoginAction::where([['provider_client_id', $providerClient->id]])->get();
+        $actions = OauthLoginAction::where([
+            ['provider_client_id', $providerClient->id],
+            ['name', '!=', null],
+            ['source', '!=', null],
+            ['model_class', '!=', null],
+            ['data', '!=', null],
+            ['status', 1],
+        ])->get();
         if ($actions) {
             foreach ($actions as $action) {
                 $model = '\\' . $action->model_class;
