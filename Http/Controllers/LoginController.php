@@ -4,6 +4,7 @@
 namespace Modules\Oauth2\Http\Controllers;
 
 use App\Http\Controllers\Auth\LoginController as AppLoginController;
+use App\Services\Robots\RobotsService;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
@@ -21,9 +22,9 @@ use SocialiteProviders\Manager\OAuth2\User as OauthUser;
 
 class LoginController extends AppLoginController
 {
-    public function __construct()
+    public function __construct(RobotsService $robotsService)
     {
-        parent::__construct();
+        parent::__construct($robotsService);
     }
 
     /**
@@ -74,6 +75,17 @@ class LoginController extends AppLoginController
             return redirect('/login/' . session()->get('provider_client_id'));
         }
         return redirect($this->redirectTo);
+    }
+
+    /**
+     * @param $user
+     * @return array|mixed|\stdClass
+     */
+    protected function sendCurlToChatAuth($user)
+    {
+        $project = str_replace(['http://', 'https://'], '', config('app.url'));
+        return Curl::to('https://event.regagro.net/script/user.php?token=aedb78a15672fcb7d96f4f8d2be17337&action=addusertoroom&project=' . $project . '&username=' . $user)
+            ->get();
     }
 
     /**
@@ -154,6 +166,9 @@ class LoginController extends AppLoginController
     {
         $emailParts = explode('@', $user->email);
         $login = implode('_', $emailParts);
+
+//        $this->sendCurlToChatAuth($user);
+
         $userFullName = $user->name;
         $userFullName .= $user->last_name ? ' ' . $user->last_name : '';
 
