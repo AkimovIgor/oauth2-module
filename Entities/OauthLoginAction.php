@@ -13,7 +13,8 @@ class OauthLoginAction extends Model
     protected $appends = ['data'];
 
     public $casts = [
-        'data' => 'array'
+        'data' => 'array',
+        'unique_data' => 'array'
     ];
 
     protected $fillable = [

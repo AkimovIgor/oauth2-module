@@ -4,27 +4,39 @@
 namespace Modules\Oauth2\Http\Controllers;
 
 use App\Http\Controllers\Auth\LoginController as AppLoginController;
+
 use App\Services\Robots\RobotsService;
-use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Ixudra\Curl\Facades\Curl;
 use Laravel\Socialite\Facades\Socialite;
 use Modules\Oauth2\Entities\OauthLoginAction;
 use Modules\Oauth2\Entities\OauthProvider;
 use Modules\Oauth2\Entities\OauthProviderClient;
-use Modules\Oauth2\Entities\SocialAccount;
+use Modules\Oauth2\Services\SocialAccountsService;
 use SocialiteProviders\Manager\OAuth2\User as OauthUser;
+use Illuminate\Support\Facades\Auth;
 
 
 class LoginController extends AppLoginController
 {
-    public function __construct(RobotsService $robotsService)
-    {
+    /**
+     * @var SocialAccountsService
+     */
+    protected $socialAccountsService;
+
+    /**
+     * LoginController constructor.
+     * @param SocialAccountsService $socialAccountsService
+     * @param RobotsService $robotsService
+     */
+    public function __construct(
+        SocialAccountsService $socialAccountsService,
+        RobotsService $robotsService
+    ) {
         parent::__construct($robotsService);
+        $this->socialAccountsService = $socialAccountsService;
+        Auth::logout();
     }
 
     /**
@@ -65,39 +77,43 @@ class LoginController extends AppLoginController
                 session()->forget('is_mobile_login');
                 return $socialiteUser->accessTokenResponseBody;
             }
-            $user = $this->findOrCreateUser($provider, $providerClient, $socialiteUser);
+            $user = $this->socialAccountsService->findOrCreateUser($provider, $providerClient, $socialiteUser);
             if (!$user)
                 return redirect()->back();
+
+            $emailParts = explode('@', $user->email);
+            $login = implode('_', $emailParts);
+
+            setcookie("chat_login_username']", $login, [
+                'expires' => time() + 3600,
+                'path' => '/',
+                'domain' => 'regagro.net',
+            ]);
+
+            $providerClients = collect($socialiteUser->getRaw()['oauth_roles'])
+                ->where('oauth_client_id', $providerClient->client_id)
+                ->pluck('passport_id')
+                ->all();
+
             auth()->login($user, true);
-            $this->doAfterLoginActions($providerClient, $socialiteUser, $user);
-            $this->authInTheChat($user);
+
+            $this->doAfterLoginActions($providerClients, $socialiteUser, $user);
+            $this->authInTheChat($user, $login);
         } catch (\Exception $e) {
-            return redirect('/login/' . session()->get('provider_client_id'));
+            return redirect('/login');
         }
         return redirect($this->redirectTo);
     }
 
     /**
-     * @param $user
-     * @return array|mixed|\stdClass
-     */
-    protected function sendCurlToChatAuth($user)
-    {
-        $project = str_replace(['http://', 'https://'], '', config('app.url'));
-        return Curl::to('https://event.regagro.net/script/user.php?token=aedb78a15672fcb7d96f4f8d2be17337&action=addusertoroom&project=' . $project . '&username=' . $user)
-            ->get();
-    }
-
-    /**
      * Выполнить действия после авторизации
-     * @param $providerClient
+     * @param $providerClients
      * @param $socialiteUser
      * @param $user
      */
-    protected function doAfterLoginActions($providerClient, $socialiteUser, $user)
+    protected function doAfterLoginActions($providerClients, $socialiteUser, $user)
     {
-        $actions = OauthLoginAction::where([
-            ['provider_client_id', $providerClient->id],
+        $actions = OauthLoginAction::whereIn('provider_client_id', $providerClients)->where([
             ['name', '!=', null],
             ['source', '!=', null],
             ['model_class', '!=', null],
@@ -107,12 +123,17 @@ class LoginController extends AppLoginController
         if ($actions) {
             foreach ($actions as $action) {
                 $model = '\\' . $action->model_class;
-                $modelObj = new $model();
-                $data = $this->getModelFillableData($socialiteUser, $user, $action);
-                foreach ($data as $attr => $val) {
-                    $modelObj->$attr = $val;
+                $modelObj = $model;
+                $data = [];
+                $arr2 = [];
+                $attributes = $this->getModelFillableData($socialiteUser, $user, $action);
+                foreach ($attributes as $attr => $val) {
+                    $data[$attr] = $val;
+                    if ($attr == 'user_id') {
+                        $arr2[$attr] = $val;
+                    }
                 }
-                $modelObj->save();
+                $modelObj::updateOrCreate($arr2, $data);
             }
         }
     }
@@ -161,33 +182,19 @@ class LoginController extends AppLoginController
     /**
      * Авторизовать пользователя в чате
      * @param $user
+     * @param $login
      */
-    protected function authInTheChat($user)
+    protected function authInTheChat($user, $login)
     {
-        $emailParts = explode('@', $user->email);
-        $login = implode('_', $emailParts);
+        $res = $this->socialAccountsService->sendCurlToChatAuth($login);
 
-//        $this->sendCurlToChatAuth($user);
+        $res = $res['error'] ?? $res['success'];
 
-        $userFullName = $user->name;
-        $userFullName .= $user->last_name ? ' ' . $user->last_name : '';
-
-        $data = json_decode('{"identifier": {
-            "type": "m.id.user",
-            "user": "' . $login . '"
-          },
-          "initial_device_display_name": "' . $userFullName . '",
-          "password": "globus",
-          "type": "m.login.password"}');
-
-        $response = Curl::to('https://event.regagro.net/_matrix/client/r0/login')
-            ->withData($data)
-            ->asJson()
-            ->post();
-
-        if (isset($response->error)) {
-            Log::info($response->error);
-        }
+        setcookie("chat_login_response", $res, [
+            'expires' => time() + 3600,
+            'path' => '/',
+            'domain' => 'regagro.net',
+        ]);
     }
 
     /**
@@ -215,105 +222,6 @@ class LoginController extends AppLoginController
             }
         }
         return file_put_contents($file, implode(PHP_EOL, $fileContent));
-    }
-
-    /**
-     * Получить или создать нового пользователя
-     * @param $provider
-     * @param $providerClient
-     * @param $socialiteUser
-     * @return User
-     */
-    public function findOrCreateUser($provider, $providerClient, $socialiteUser)
-    {
-        if ($user = $this->findUserBySocialId($provider, $socialiteUser->getId())) {
-            $user = $this->attachRoles($user, $providerClient, $socialiteUser);
-            return $user;
-        }
-
-        if ($user = $this->findUserByEmail($provider, $socialiteUser->getEmail())) {
-            $user = $this->attachRoles($user, $providerClient, $socialiteUser);
-            $this->addSocialAccount($provider, $user, $socialiteUser);
-            return $user;
-        }
-
-        $user = User::create([
-            'name' => $socialiteUser->getName(),
-            'email' => $socialiteUser->getEmail(),
-            'password' => Hash::make(Str::random(24)),
-        ]);
-
-        if ($providerClient->role_id) {
-            $user = $this->attachRoles($user, $providerClient, $socialiteUser);
-        }
-
-        $this->addSocialAccount($provider, $user, $socialiteUser);
-        return $user;
-    }
-
-    /**
-     * Прикрепить роли
-     * @param $user
-     * @param $providerClient
-     * @param $socialiteUser
-     * @return mixed
-     */
-    protected function attachRoles($user, $providerClient, $socialiteUser)
-    {
-        $providers = collect($socialiteUser->getRaw()['oauth_roles'])
-            ->where('oauth_client_id', $providerClient->client_id)
-            ->pluck('passport_id')
-            ->all();
-        $roles = [];
-        $providerClients = OauthProviderClient::whereIn('id', $providers)->get();
-        foreach ($providerClients as $client) {
-            $roles[] = $client->role_id;
-        }
-        $user->detachRoles($user->roles);
-        $user->attachRoles($roles);
-
-        return $user;
-    }
-
-    /**
-     * Получить пользователя по идентификатору в клиентском приложении
-     * @param $provider
-     * @param $id
-     * @return User|bool
-     */
-    public function findUserBySocialId($provider, $id)
-    {
-        $socialAccount = SocialAccount::where('provider_id', $provider->id)
-            ->where('oauth_uid', $id)
-            ->first();
-        return $socialAccount ? $socialAccount->user : false;
-    }
-
-    /**
-     * Получить пользователя по электронной почте
-     * @param $provider
-     * @param $email
-     * @return User|null
-     */
-    public function findUserByEmail($provider, $email)
-    {
-        return !$email ? null : User::where('email', $email)->first();
-    }
-
-    /**
-     * Добавить новый аккаунт в бд
-     * @param $provider
-     * @param $user
-     * @param $socialiteUser
-     */
-    public function addSocialAccount($provider, $user, $socialiteUser)
-    {
-        SocialAccount::create([
-            'user_id' => $user->id,
-            'oauth_uid' => $socialiteUser->getId(),
-            'provider_id' => $provider->id,
-            'token' => $socialiteUser->token,
-        ]);
     }
 
     /**

@@ -4,8 +4,16 @@
 namespace Modules\Oauth2\Providers;
 
 
+use Coderello\SocialGrant\Resolvers\SocialUserResolverInterface;
 use Illuminate\Support\Arr;
 use Illuminate\Support\ServiceProvider;
+use Modules\Oauth2\Resolvers\SocialUserResolver;
+use Modules\Oauth2\Services\Repositories\OauthProviderClient\EloquentOauthProviderClientRepository;
+use Modules\Oauth2\Services\Repositories\OauthProviderClient\OauthProviderClientRepositoryInterface;
+use Modules\Oauth2\Services\Repositories\SocialAccount\EloquentSocialAccountRepository;
+use Modules\Oauth2\Services\Repositories\SocialAccount\SocialAccountRepositoryInterface;
+use Modules\Oauth2\Services\Repositories\User\EloquentUserRepository;
+use Modules\Oauth2\Services\Repositories\User\UserRepositoryInterface;
 
 class ConfigServiceProvider extends ServiceProvider
 {
@@ -26,7 +34,18 @@ class ConfigServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->registerBindings();
+    }
+
+    /**
+     * Связать абстракции с классами
+     */
+    protected function registerBindings()
+    {
+        $this->app->bind(SocialUserResolverInterface::class, SocialUserResolver::class);
+        $this->app->bind(UserRepositoryInterface::class, EloquentUserRepository::class);
+        $this->app->bind(OauthProviderClientRepositoryInterface::class, EloquentOauthProviderClientRepository::class);
+        $this->app->bind(SocialAccountRepositoryInterface::class, EloquentSocialAccountRepository::class);
     }
 
     /**
