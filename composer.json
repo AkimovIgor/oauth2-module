@@ -32,6 +32,8 @@
         "socialiteproviders/laravelpassport": "^4.0",
         "socialiteproviders/discord": "^4.0",
         "socialiteproviders/instagram": "^4.0",
-        "socialiteproviders/vkontakte": "^4.2"
+        "socialiteproviders/vkontakte": "^4.2",
+        "coderello/laravel-passport-social-grant": "^3.0",
+        "lcobucci/jwt": "3.4"
     }
 }

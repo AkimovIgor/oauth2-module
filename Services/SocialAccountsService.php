@@ -5,6 +5,7 @@ namespace Modules\Oauth2\Services;
 
 
 use App\User;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Ixudra\Curl\Facades\Curl;
@@ -142,6 +143,23 @@ class SocialAccountsService
             'provider_id' => $provider->id,
             'token' => $socialiteUser->token,
         ]);
+    }
+
+    /**
+     * Установить конфигурацию клиента провайдера
+     * @param $providerClient
+     */
+    public function setClientConfig($providerClient)
+    {
+        $config = [
+            'client_id' => $providerClient->client_id,
+            'client_secret' => $providerClient->client_secret,
+            'redirect' => $providerClient->provider->redirect_uri,
+        ];
+        if ($providerClient->host) {
+            $config['host'] = $providerClient->host;
+        }
+        Config::set('services.' . $providerClient->provider->name, $config);
     }
 
     /**

@@ -51,7 +51,7 @@ class LoginController extends AppLoginController
         $providerClient = OauthProviderClient::find($provider_client_id);
         if (!$providerClient)
             return redirect()->back()->withErrors(['message' => 'Provider client not found.']);
-        $this->setClientConfig($providerClient);
+        $this->socialAccountsService->setClientConfig($providerClient);
         session()->put('provider_client_id', $provider_client_id);
         session()->put('is_mobile_login', $mobileLogin);
         return Socialite::driver($providerClient->provider->name)->stateless()->redirect();
@@ -67,17 +67,17 @@ class LoginController extends AppLoginController
     {
         $providerClient = OauthProviderClient::find(session()->get('provider_client_id'));
         $isMobile = session()->get('is_mobile_login');
-        $this->setClientConfig($providerClient);
+        $this->socialAccountsService->setClientConfig($providerClient);
         $provider = OauthProvider::where('name', $provider)->first();
         if (!$provider)
             return redirect()->back()->withErrors(['message' => 'Provider not found.']);
         try {
             $socialiteUser = Socialite::driver($provider->name)->stateless()->user();
+            $user = $this->socialAccountsService->findOrCreateUser($provider, $providerClient, $socialiteUser);
             if ($isMobile) {
                 session()->forget('is_mobile_login');
                 return $socialiteUser->accessTokenResponseBody;
             }
-            $user = $this->socialAccountsService->findOrCreateUser($provider, $providerClient, $socialiteUser);
             if (!$user)
                 return redirect()->back();
 
@@ -222,22 +222,5 @@ class LoginController extends AppLoginController
             }
         }
         return file_put_contents($file, implode(PHP_EOL, $fileContent));
-    }
-
-    /**
-     * Установить конфигурацию клиента провайдера
-     * @param $providerClient
-     */
-    protected function setClientConfig($providerClient)
-    {
-        $config = [
-            'client_id' => $providerClient->client_id,
-            'client_secret' => $providerClient->client_secret,
-            'redirect' => $providerClient->provider->redirect_uri,
-        ];
-        if ($providerClient->host) {
-            $config['host'] = $providerClient->host;
-        }
-        Config::set('services.' . $providerClient->provider->name, $config);
     }
 }
