@@ -23,6 +23,7 @@ class OauthLoginAction extends Model
         'source',
         'model_class',
         'data',
+        'unique_data',
         'status'
     ];
 

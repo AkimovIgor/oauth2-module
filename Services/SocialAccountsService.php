@@ -82,7 +82,7 @@ class SocialAccountsService
     }
 
     /**
-     * Прикрепить роли
+     * Открепить старые и прикрепить новые роли к пользователю
      * @param $user
      * @param $providerClient
      * @param $socialiteUser
@@ -90,19 +90,29 @@ class SocialAccountsService
      */
     protected function attachRoles($user, $providerClient, $socialiteUser)
     {
-        $providers = collect($socialiteUser->getRaw()['oauth_roles'])
-            ->where('oauth_client_id', $providerClient->client_id)
-            ->pluck('passport_id')
-            ->all();
         $roles = [];
-        $providerClients = $this->oauthProviderClientRepo->getByIds($providers);
+        $providerRoles = $this->getRolesIdsByProviderClientId($socialiteUser, $providerClient->client_id);
+        $providerClients = $this->oauthProviderClientRepo->getByIds($providerRoles);
         foreach ($providerClients as $client) {
             $roles[] = $client->role_id;
         }
         $user->detachRoles($user->roles);
         $user->attachRoles($roles);
-
         return $user;
+    }
+
+    /**
+     * Получить роли по CLIENT_ID провайдера
+     * @param $socialiteUser
+     * @param $providerClientId
+     * @return array
+     */
+    public function getRolesIdsByProviderClientId($socialiteUser, $providerClientId)
+    {
+        return collect($socialiteUser->getRaw()['oauth_roles'])
+            ->where('oauth_client_id', $providerClientId)
+            ->pluck('provider_id')
+            ->all();
     }
 
     /**

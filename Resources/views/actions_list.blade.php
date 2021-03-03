@@ -52,14 +52,20 @@
                             <tr>
                                 <th scope="col">Source_field</th>
                                 <th scope="col">Model_field</th>
+                                <th scope="col">Unique</th>
                                 <th scope="col"></th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($action->data as $key => $data)
-                            <tr>
+                            <tr class="text-center">
                                 <td><input type="text" name="data[]" class="form-control" required value="{{ $key }}"></td>
                                 <td><input type="text" name="data[]" class="form-control" required value="{{ $data }}"></td>
+                                <td>
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="status-{{ $data }}" value="{{ $key }}" name="unique_data[{{ $data }}]" @if(is_array($action->unique_data) && in_array($key, $action->unique_data)) checked @endif>
+                                    </div>
+                                </td>
                                 <td><span class="clear_row" style="text-decoration: none; color: #e3342f; cursor: pointer"><span style="font-size: 15px" class="glyphicon glyphicon-remove" aria-hidden="true"></span></span></td>
                             </tr>
                             @endforeach

@@ -90,10 +90,8 @@ class LoginController extends AppLoginController
                 'domain' => 'regagro.net',
             ]);
 
-            $providerClients = collect($socialiteUser->getRaw()['oauth_roles'])
-                ->where('oauth_client_id', $providerClient->client_id)
-                ->pluck('passport_id')
-                ->all();
+            $providerClients = $this->socialAccountsService
+                ->getRolesIdsByProviderClientId($socialiteUser, $providerClient->client_id);
 
             auth()->login($user, true);
 
@@ -125,15 +123,16 @@ class LoginController extends AppLoginController
                 $model = '\\' . $action->model_class;
                 $modelObj = $model;
                 $data = [];
-                $arr2 = [];
+                $attachableData = [];
+                $uniqueData = $action->unique_data ? array_keys($action->unique_data) : [];
                 $attributes = $this->getModelFillableData($socialiteUser, $user, $action);
                 foreach ($attributes as $attr => $val) {
                     $data[$attr] = $val;
-                    if ($attr == 'user_id') {
-                        $arr2[$attr] = $val;
+                    if (in_array($attr, $uniqueData)) {
+                        $attachableData[$attr] = $val;
                     }
                 }
-                $modelObj::updateOrCreate($arr2, $data);
+                $modelObj::updateOrCreate($attachableData, $data);
             }
         }
     }

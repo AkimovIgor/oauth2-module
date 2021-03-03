@@ -177,6 +177,9 @@ class Oauth2Controller extends Controller
         return false;
     }
 
+    /**
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function showAddActionForm()
     {
         $newAction = new OauthLoginAction();
@@ -188,6 +191,11 @@ class Oauth2Controller extends Controller
         return response()->json(['content' => $view], 200);
     }
 
+    /**
+     * @param Request $request
+     * @param $action_id
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function saveLoginAction(Request $request, $action_id)
     {
         $data = $request->all();
@@ -199,6 +207,10 @@ class Oauth2Controller extends Controller
         return response()->json(['content' => $result], 200);
     }
 
+    /**
+     * @param $action_id
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteLoginAction($action_id)
     {
         $action = OauthLoginAction::find($action_id);
@@ -210,6 +222,9 @@ class Oauth2Controller extends Controller
         return response()->json(['content' => $view], 200);
     }
 
+    /**
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function addTableRow()
     {
         $view = View::make('oauth2::add_table_row')->render();
@@ -246,6 +261,10 @@ class Oauth2Controller extends Controller
         return file_put_contents($file, implode(PHP_EOL, $fileContent));
     }
 
+    /**
+     * @param $data
+     * @return array
+     */
     protected function parseActionData($data)
     {
         $parsedData = [];
