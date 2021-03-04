@@ -191,7 +191,14 @@ class LoginController extends AppLoginController
     {
         $res = $this->socialAccountsService->sendCurlToChatAuth($login);
 
-//        $res = $res['error'] ?? $res['success'];
+
+        if (isset($res['error'])) {
+            $res = $res['error'];
+        } elseif (isset($res['success'])) {
+            $res = $res['success'];
+        } else {
+            $res = 'Chat is not activated.';
+        }
 
         setcookie("chat_login_response", $res, [
             'expires' => time() + 3600,
