@@ -117,22 +117,23 @@ class LoginController extends AppLoginController
             ['model_class', '!=', null],
             ['data', '!=', null],
             ['status', 1],
-        ])->get();
+        ])->orderBy('priority')->get();
         if ($actions) {
+            $prevActions = [];
             foreach ($actions as $action) {
                 $model = '\\' . $action->model_class;
                 $modelObj = $model;
                 $data = [];
                 $attachableData = [];
                 $uniqueData = $action->unique_data ? array_keys($action->unique_data) : [];
-                $attributes = $this->getModelFillableData($socialiteUser, $user, $action);
+                $attributes = $this->getModelFillableData($socialiteUser, $user, $action, $prevActions);
                 foreach ($attributes as $attr => $val) {
                     $data[$attr] = $val;
                     if (in_array($attr, $uniqueData)) {
                         $attachableData[$attr] = $val;
                     }
                 }
-                $modelObj::updateOrCreate($attachableData, $data);
+                $prevActions[$action->priority] = $modelObj::updateOrCreate($attachableData, $data);
             }
         }
     }
@@ -142,13 +143,14 @@ class LoginController extends AppLoginController
      * @param $source
      * @param $user
      * @param $action
+     * @param $prevActions
      * @return array
      */
-    protected function getModelFillableData($source, $user, $action)
+    protected function getModelFillableData($source, $user, $action, $prevActions)
     {
         $fillableData = [];
         foreach ($action->data as $key => $value) {
-            $fillableData[$value] = $this->parseSource($key, $source, $user);
+            $fillableData[$value] = $this->parseSource($key, $source, $user, $prevActions);
         }
         return $fillableData;
     }
@@ -158,9 +160,10 @@ class LoginController extends AppLoginController
      * @param $key
      * @param $source
      * @param $user
+     * @param $prevActions
      * @return array|mixed
      */
-    protected function parseSource($key, $source, $user)
+    protected function parseSource($key, $source, $user, $prevActions)
     {
         if ($source instanceof OauthUser) {
             $value = $source->getRaw();
@@ -168,12 +171,13 @@ class LoginController extends AppLoginController
             $value = $source;
         }
         $value['current_user'] = $user->toArray();
+        $value['prev_actions'] = $prevActions;
         $keyParts = explode('.', $key);
         foreach ($keyParts as $part) {
             if (is_object($part))
-                $value = $value->$part;
+                $value = $value->$part ?? null;
             else
-                $value = $value[$part];
+                $value = $value[$part] ?? null;
         }
         return $value;
     }
@@ -187,7 +191,7 @@ class LoginController extends AppLoginController
     {
         $res = $this->socialAccountsService->sendCurlToChatAuth($login);
 
-        $res = $res['error'] ?? $res['success'];
+//        $res = $res['error'] ?? $res['success'];
 
         setcookie("chat_login_response", $res, [
             'expires' => time() + 3600,

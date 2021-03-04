@@ -17,6 +17,11 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="priority">Priority</label>
+                        <input type="text" name="priority" class="form-control" required value="{{ $action->priority }}">
+                    </div>
+
+                    <div class="form-group">
                         <label for="provider_client">Provider Client</label>
                         <select class="form-control" id="provider_client" name="provider_client_id">
                             @foreach($providerClients as $client)
@@ -28,11 +33,14 @@
                     <div class="form-group">
                         <label for="source">Source</label>
                         <select class="form-control" id="source" name="source">
-                            <option value="getUser">getUser</option>
+                            <option value="remoteUser">Remote user</option>
+                            <option value="model">Model</option>
+                            <option value="dataSource">Data source</option>
                         </select>
                     </div>
+
                     <div class="form-group">
-                        <label for="model">Model</label>
+                        <label for="model">Target model</label>
                         <select class="form-control" id="model" name="model_class">
                             @foreach($models as $model)
                             <option value="{{ $class = isset($model->parent) ? $model->parent->namespace : $model->namespace }}" @if($action->model_class == $class) selected @endif>{{ $model->name }}</option>
@@ -59,8 +67,8 @@
                         <tbody>
                             @foreach($action->data as $key => $data)
                             <tr class="text-center">
-                                <td><input type="text" name="data[]" class="form-control" required value="{{ $key }}"></td>
-                                <td><input type="text" name="data[]" class="form-control" required value="{{ $data }}"></td>
+                                <td><input type="text" name="data[]" class="form-control" data-key="value" required value="{{ $key }}"></td>
+                                <td><input type="text" name="data[]" class="form-control" data-key="name" required value="{{ $data }}"></td>
                                 <td>
                                     <div class="form-check">
                                         <input type="checkbox" class="form-check-input" id="status-{{ $data }}" value="{{ $key }}" name="unique_data[{{ $data }}]" @if(is_array($action->unique_data) && in_array($key, $action->unique_data)) checked @endif>

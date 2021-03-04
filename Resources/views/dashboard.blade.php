@@ -45,6 +45,7 @@
                                 @endif
                             </div>
                         </div>
+                        <a href="{{url('/admin')}}" class="btn btn-secondary btn-sm mt-3"><- Back to Admin</a>
                     </div>
                     <div class="card">
                         <div class="card-header" id="headingTwo">

@@ -18,8 +18,10 @@ class OauthLoginAction extends Model
     ];
 
     protected $fillable = [
+        'priority',
         'provider_client_id',
         'name',
+        'method',
         'source',
         'model_class',
         'data',

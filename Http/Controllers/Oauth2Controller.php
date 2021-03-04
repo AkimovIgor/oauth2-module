@@ -201,6 +201,7 @@ class Oauth2Controller extends Controller
         $data = $request->all();
         $data['status'] = isset($data['status']) ? 1 : 0;
         $data['data'] = $this->parseActionData($data['data']);
+        $data['unique_data'] = $this->parseUniqueData($data['unique_data']);
         $action = OauthLoginAction::find($action_id);
         $action->fill($data);
         $result = $action->save();
@@ -270,8 +271,24 @@ class Oauth2Controller extends Controller
         $parsedData = [];
         if ($data) {
             for ($i = 0; $i < count($data); $i+=2) {
-                if (!empty($data[$i]))
+                if (!empty($data[$i + 1]))
                     $parsedData[$data[$i]] = $data[$i + 1];
+            }
+        }
+        return $parsedData;
+    }
+
+    /**
+     * @param $data
+     * @return array
+     */
+    protected function parseUniqueData($data)
+    {
+        $parsedData = [];
+        if ($data) {
+            foreach ($data as $key => $val) {
+                if ($key != null && $key != 'null')
+                    $parsedData[$key] = $val;
             }
         }
         return $parsedData;

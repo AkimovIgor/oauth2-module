@@ -71,6 +71,28 @@ $( document ).ready(function() {
     console.log(url)
   });
 
+  $modal.on('change','#source', function (e) {
+    e.preventDefault();
+    var select = $(this);
+    console.log(select.val())
+  });
+
+  $modal.on('change','.row-checkbox .form-check-input', function (e) {
+    e.preventDefault();
+    var ch = $(this);
+    var par = ch.parents().parents()[1].children;
+    var key = $(par[0].children[0]).val();
+    var data = $(par[1].children[0]).val();
+    ch.attr('value', key);
+    ch.attr('name', 'unique_data[' + data + ']');
+  });
+
+  $modal.on('input','tr.text-center .form-control', function (e) {
+    var inp = $(this);
+    var attribute = $(this).data('key');
+    inp.closest('tr').find("input[type=checkbox]").attr(attribute, inp.val());
+  });
+
   // Providers
   $('.install_new_provider').on('click', function (e) {
     e.preventDefault();
