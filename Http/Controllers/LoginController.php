@@ -84,7 +84,7 @@ class LoginController extends AppLoginController
             $emailParts = explode('@', $user->email);
             $login = implode('_', $emailParts);
 
-            setcookie("chat_login_username']", $login, [
+            setcookie("chat_login_username", $login, [
                 'expires' => time() + 3600,
                 'path' => '/',
                 'domain' => 'regagro.net',
