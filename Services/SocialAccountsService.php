@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Ixudra\Curl\Facades\Curl;
+use Modules\Oauth2\Entities\OauthProviderClient;
 use Modules\Oauth2\Services\Repositories\OauthProviderClient\OauthProviderClientRepositoryInterface;
 use Modules\Oauth2\Services\Repositories\SocialAccount\SocialAccountRepositoryInterface;
 use Modules\Oauth2\Services\Repositories\User\UserRepositoryInterface;
@@ -56,7 +57,9 @@ class SocialAccountsService
     public function findOrCreateUser($provider, $providerClient, $socialiteUser)
     {
         if ($user = $this->findUserBySocialId($provider, $socialiteUser->getId())) {
-            $user = $this->attachRoles($user, $providerClient, $socialiteUser);
+            if (isset($socialiteUser->getRaw()['oauth_roles'])) {
+                $user = $this->attachRoles($user, $providerClient, $socialiteUser);
+            }
             return $user;
         }
 
@@ -109,6 +112,11 @@ class SocialAccountsService
      */
     public function getRolesIdsByProviderClientId($socialiteUser, $providerClientId)
     {
+        if (! isset($socialiteUser->getRaw()['oauth_roles'])) {
+            $client = OauthProviderClient::where('client_id', $providerClientId)->first();
+            return [$client->id];
+        }
+
         return collect($socialiteUser->getRaw()['oauth_roles'])
             ->where('oauth_client_id', $providerClientId)
             ->pluck('provider_id')
