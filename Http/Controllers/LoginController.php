@@ -96,7 +96,10 @@ class LoginController extends AppLoginController
             auth()->login($user, true);
 
             $this->doAfterLoginActions($providerClients, $socialiteUser, $user);
-            $this->authInTheChat($user, $login);
+
+            if ($this->userHasChatAccess($socialiteUser)) {
+                $this->authInTheChat($user, $login);
+            }
         } catch (\Exception $e) {
             return redirect('/login');
         }
@@ -205,6 +208,23 @@ class LoginController extends AppLoginController
             'path' => '/',
             'domain' => 'regagro.net',
         ]);
+    }
+
+    /**
+     * Проверить, подключен ли у пользователя чат
+     * @param $user
+     * @return bool
+     */
+    protected function userHasChatAccess($user)
+    {
+        $services = $user->getRaw()['oauth_roles'] ?? null;
+        if ($services) {
+            $services = collect($services);
+            if ($services->where('oauth_client_id', 15)->first()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
