@@ -128,8 +128,8 @@
                                         @foreach($socialAccounts as $account)
                                             <tr>
                                                 <td>{{ $account->id }}</td>
-                                                <td>{{ $account->user->name }}</td>
-                                                <td>{{ $account->user->id }}</td>
+                                                <td>{{ $account->user->name ?? 'Not Found' }}</td>
+                                                <td>{{ $account->user->id ?? 'Deleted' }}</td>
                                                 <td>{{ $account->oauth_uid }}</td>
                                                 <td>{{ $account->provider->name }}</td>
                                                 <td>{{ $account->created_at }}</td>
