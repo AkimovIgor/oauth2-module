@@ -97,6 +97,8 @@ class LoginController extends AppLoginController
 
             $this->doAfterLoginActions($providerClients, $socialiteUser, $user);
 
+            // Auth in the chat
+
             if ($this->userHasChatAccess($socialiteUser)) {
                 $this->authInTheChat($user, $login);
             }
