@@ -101,6 +101,7 @@ class SocialAccountsService
         }
         $user->detachRoles($user->roles);
         $user->attachRoles($roles);
+        $user = User::with('roles')->where('id',$user->id)->first();
         return $user;
     }
 
