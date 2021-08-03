@@ -18,7 +18,6 @@ class EventServiceProvider extends ServiceProvider
             'SocialiteProviders\\Discord\\DiscordExtendSocialite@handle',
             'SocialiteProviders\\Instagram\\InstagramExtendSocialite@handle',
             'SocialiteProviders\\VKontakte\\VKontakteExtendSocialite@handle',
-            'SocialiteProviders\\Odnoklassniki\\OdnoklassnikiExtendSocialite@handle',
             'SocialiteProviders\\Yandex\\YandexExtendSocialite@handle'
         ],
     ];
